@@ -6,3 +6,7 @@
 
 ## 所需依赖
 报什么错就装什么，看不懂报错的问GPT
+重要依赖列表：
+ - nonebot.adapters.onebot.v11
+ - playwright
+ - nonebot_plugin_apscheduler
