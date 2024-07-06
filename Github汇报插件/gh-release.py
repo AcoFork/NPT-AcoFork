@@ -2,16 +2,16 @@ import httpx
 from nonebot import require, get_driver
 from nonebot.adapters.onebot.v11 import Bot, Message
 from nonebot.log import logger
+from datetime import datetime
 
 # 配置部分
 GITHUB_API_URLS = [
-    "https://api.github.com/repos/simple/demo/releases/latest",
-    "https://api.github.com/repos/simple/demo/releases/latest",
-
+    "https://api.github.com/repos/TeamFlos/phira/releases",
+    "https://api.github.com/repos/AcoFork/NPT-AcoFork/releases",
 ]
 GROUP_ID = 12345678  # 你的QQ群号
-CHECK_INTERVAL = 60  # 检查间隔时间（秒）
-GITHUB_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"  # 你的GitHub个人访问令牌
+CHECK_INTERVAL = 5  # 检查间隔时间（秒）
+GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
@@ -25,10 +25,16 @@ async def check_github_release(url):
         try:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
-            release = response.json()
-            release_id = release["id"]
-            release_name = release["name"]
-            release_url = release["html_url"]
+            releases = response.json()
+            
+            if not releases:
+                return
+
+            # 找到最新的 release
+            latest_release = max(releases, key=lambda r: datetime.strptime(r["created_at"], "%Y-%m-%dT%H:%M:%SZ"))
+            release_id = latest_release["id"]
+            release_name = latest_release["name"]
+            release_url = latest_release["html_url"]
             repo_name = response.url.path.split('/')[2] + '/' + response.url.path.split('/')[3]
 
             if repo_name not in latest_release_ids:
