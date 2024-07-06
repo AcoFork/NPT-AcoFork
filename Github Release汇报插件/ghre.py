@@ -9,7 +9,7 @@ GITHUB_API_URLS = [
     "https://api.github.com/repos/simple/demo/releases/latest",
 
 ]
-GROUP_ID = 941947852  # 你的QQ群号
+GROUP_ID = 12345678  # 你的QQ群号
 CHECK_INTERVAL = 60  # 检查间隔时间（秒）
 GITHUB_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx"  # 你的GitHub个人访问令牌
 
