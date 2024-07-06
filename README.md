@@ -1,5 +1,5 @@
 # NPT-AcoFork
-这个仓库包含所有已公开的由AcoFork使用GPT编写的NoneBot2插件
+这个仓库包含所有已公开的由AcoFork使用一些大语言模型编写的NoneBot2插件
 
 ## 使用方法
 将后缀为 **.py** 的文件直接放入你的NoneBot2的 **plugins** 文件夹即可使用
