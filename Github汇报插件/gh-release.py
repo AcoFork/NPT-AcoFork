@@ -77,7 +77,7 @@ async def check_github_releases(url, repo_key):
                     await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
 
                 for release in removed_releases:
-                    msg = f"仓库 {repo_key} 的 Release 已删除: {release['name']}"
+                    msg = f"仓库 {repo_key} 的 Release 已被删除: {release['name']}"
                     await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
 
             else:  # 第一次轮询
