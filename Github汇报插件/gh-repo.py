@@ -5,90 +5,42 @@ from nonebot.log import logger
 
 # 配置部分
 GITHUB_API_URLS = [
-    {
-        "url": "https://api.github.com/repos/TeamFlos/phira/releases",
-        "repo_name": "TeamFlos/phira"
-    },
-    {
-        "url": "https://api.github.com/repos/AcoFork/NPT-AcoFork/releases",
-        "repo_name": "AcoFork/NPT-AcoFork"
-    }
+    "https://api.github.com/repos/TeamFlos/phira/git/trees/main?recursive=1",
+    "https://api.github.com/repos/AcoFork/NPT-AcoFork/git/trees/main?recursive=1",
 ]
 GROUP_ID = 12345678  # 你的QQ群号
 CHECK_INTERVAL = 5  # 检查间隔时间（秒）
-GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
+GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
 
-repo_info = {}
+latest_trees = {}
 
-async def check_github_releases(url, repo_name):
-    global repo_info
+async def check_github_repo_files(url):
+    global latest_trees
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(url, headers=headers)
             response.raise_for_status()
-            releases = response.json()
-            current_releases = {
-                "releases": [],
-                "pre-releases": []
-            }
+            tree_data = response.json()
+            current_tree = {item['path']: item['sha'] for item in tree_data['tree']}
+            repo_name = response.url.path.split('/')[2] + '/' + response.url.path.split('/')[3]
 
-            for release in releases:
-                if release["prerelease"]:
-                    current_releases["pre-releases"].append({
-                        "name": release["name"],
-                        "url": release["html_url"]
-                    })
-                else:
-                    current_releases["releases"].append({
-                        "name": release["name"],
-                        "url": release["html_url"]
-                    })
-
-            if repo_name not in repo_info:  # 第一次轮询
-                repo_info[repo_name] = current_releases
-                total_releases = len(repo_info[repo_name]["releases"])
-                total_prereleases = len(repo_info[repo_name]["pre-releases"])
-                latest_release = repo_info[repo_name]["releases"][0]["name"]
-                latest_release_url = repo_info[repo_name]["releases"][0]["url"]
-                msg = (
-                    f"仓库 {repo_name} 现有 {total_releases} 个 Release 和 {total_prereleases} 个 Pre-Release。\n"
-                    f"最新的 Release 版本: {latest_release}\n"
-                    f"[Release链接]({latest_release_url})"
-                )
-                bot = get_bot()
-                await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
+            if repo_name not in latest_trees:
+                latest_trees[repo_name] = current_tree
                 return
 
-            # 后续轮询处理
-            added_releases = []
-            removed_releases = []
+            previous_tree = latest_trees[repo_name]
+            latest_trees[repo_name] = current_tree
 
-            for release in current_releases["releases"]:
-                if release not in repo_info[repo_name]["releases"]:
-                    added_releases.append(release)
+            modified_files = [path for path in current_tree if path not in previous_tree or current_tree[path] != previous_tree[path]]
 
-            for release in repo_info[repo_name]["releases"]:
-                if release not in current_releases["releases"]:
-                    removed_releases.append(release)
-
-            # 更新 repo_info
-            repo_info[repo_name] = current_releases
-
-            # 发送新增和删除的 release 消息
-            for release in added_releases:
-                msg = f"仓库 {repo_name} 发现了新的 Release: {release['name']}\n{release['url']}"
+            if modified_files:
+                msg = f"仓库 {repo_name} 有文件发生变动：\n" + "\n".join(modified_files)
                 bot = get_bot()
                 await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
-
-            for release in removed_releases:
-                msg = f"仓库 {repo_name} 的 Release 已删除: {release['name']}"
-                bot = get_bot()
-                await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
-
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP error occurred: {e}")
         except Exception as e:
@@ -97,8 +49,8 @@ async def check_github_releases(url, repo_name):
 # 使用APScheduler插件来实现定时任务
 @scheduler.scheduled_job("interval", seconds=CHECK_INTERVAL)
 async def scheduled_check():
-    for config in GITHUB_API_URLS:
-        await check_github_releases(config["url"], config["repo_name"])
+    for url in GITHUB_API_URLS:
+        await check_github_repo_files(url)
 
 # 获取bot实例的函数
 def get_bot() -> Bot:
@@ -106,3 +58,15 @@ def get_bot() -> Bot:
     for b in nonebot.get_bots().values():
         return b
     raise RuntimeError("Bot instance not found")
+
+# 模拟发送文件变动通知的函数
+async def simulate_send_notification():
+    repo_name = "TeamFlos/phira"
+    modified_files = [
+        "src/main.py",
+        "src/utils/helper.py",
+        "README.md"
+    ]
+    msg = f"仓库 {repo_name} 有文件发生变动：\n" + "\n".join(modified_files)
+    bot = get_bot()
+    await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
