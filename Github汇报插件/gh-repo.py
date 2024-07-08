@@ -8,7 +8,11 @@ GITHUB_API_URLS = [
     "https://api.github.com/repos/TeamFlos/phira/git/trees/main?recursive=1",
     "https://api.github.com/repos/AcoFork/NPT-AcoFork/git/trees/main?recursive=1",
 ]
-GROUP_ID = [123456789, 987654321]  # 你的QQ群号
+# 你的QQ群号
+GROUP_ID = [
+    "123456789",
+    "987654321"
+]
 CHECK_INTERVAL = 5  # 检查间隔时间（秒）
 GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
 
