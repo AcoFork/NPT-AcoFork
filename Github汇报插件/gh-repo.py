@@ -8,13 +8,9 @@ GITHUB_API_URLS = [
     "https://api.github.com/repos/TeamFlos/phira/git/trees/main?recursive=1",
     "https://api.github.com/repos/AcoFork/NPT-AcoFork/git/trees/main?recursive=1",
 ]
-# 你的QQ群号
-GROUP_ID = [
-    "123456789",
-    "987654321"
-]
+GROUP_IDS = [123456789, 123456789]  # 你的QQ群号列表
 CHECK_INTERVAL = 5  # 检查间隔时间（秒）
-GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
+GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
@@ -40,7 +36,8 @@ async def check_github_repo_files(url):
             if modified_files:
                 msg = f"仓库 {repo_name} 有文件发生变动：\n" + "\n".join(modified_files) + f"\n\n仓库链接：{repo_url}"
                 bot = get_bot()
-                await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
+                for group_id in GROUP_IDS:
+                    await bot.send_group_msg(group_id=group_id, message=Message(msg))
         except httpx.HTTPStatusError as e:
             logger.error(f"HTTP错误：{e}")
         except Exception as e:
@@ -70,4 +67,5 @@ async def simulate_send_notification():
     ]
     msg = f"仓库 {repo_name} 有文件发生变动：\n" + "\n".join(modified_files) + f"\n\n仓库链接：{repo_url}"
     bot = get_bot()
-    await bot.send_group_msg(group_id=GROUP_ID, message=Message(msg))
+    for group_id in GROUP_IDS:
+        await bot.send_group_msg(group_id=group_id, message=Message(msg))
