@@ -21,7 +21,7 @@ def check_user_keyword_file():
     if not os.path.exists(USER_KEYWORD_FILE):
         with open(USER_KEYWORD_FILE, "w") as f:
             json.dump({}, f)
-        logging.info(f"Created 'user_keyword.json' file at {USER_KEYWORD_FILE}")
+        #logging.info(f"Created 'user_keyword.json' file at {USER_KEYWORD_FILE}")
 
 check_reply_dir()
 check_user_keyword_file()

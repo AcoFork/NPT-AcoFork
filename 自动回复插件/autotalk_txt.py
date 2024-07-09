@@ -26,14 +26,16 @@ async def handle_text_reply(event: Event):
             with open(file_path + ".txt", "r", encoding="utf-8") as file:
                 reply_msg = file.read()
                 text_found = True
-                logging.info(f"Text file found and read: {file_path}.txt")  # 调试信息
+                #logging.info(f"Text file found and read: {file_path}.txt")  # 调试信息
                 await text_reply.send(reply_msg)
         except FileNotFoundError:
-            logging.warning(f"Text file not found after being found: {file_path}.txt")  # 调试信息
+            return
+            #logging.warning(f"Text file not found after being found: {file_path}.txt")  # 调试信息
 
     # 如果没有找到对应的文本
     if not text_found:
-        logging.warning(f"No corresponding text found for: {file_path}")
+        return
+        #logging.warning(f"No corresponding text found for: {file_path}")
 
 # 在插件加载时检查目录是否存在，如果不存在则创建
 def check_reply_dir():

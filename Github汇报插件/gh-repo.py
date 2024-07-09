@@ -62,10 +62,10 @@ async def get_latest_commit_summary(client, repo_name):
             return commit_message
         return "无法获取提交信息"
     except httpx.HTTPStatusError as e:
-        logger.error(f"HTTP错误：{e}")
+        #logger.error(f"HTTP错误：{e}")
         return "获取提交信息时出错"
     except Exception as e:
-        logger.error(f"发生错误：{e}")
+        #logger.error(f"发生错误：{e}")
         return "获取提交信息时出错"
 
 # 使用APScheduler插件来实现定时任务

@@ -66,9 +66,10 @@ async def handle_image_reply(event: Event):
                 img_base64 = base64.b64encode(img_data).decode("utf-8")
                 img_segment = MessageSegment.image(f"base64://{img_base64}")
                 await image_reply.send(img_segment)
-                logging.info(f"Sent full page screenshot from HTML: {file_path}.html")  # 调试信息
+                #logging.info(f"Sent full page screenshot from HTML: {file_path}.html")  # 调试信息
             
         except Exception as e:
-            logging.error(f"Failed to send full page screenshot from HTML: {e}")
-    else:
-        logging.warning(f"No corresponding HTML found for: {file_path}")
+            return
+            #logging.error(f"Failed to send full page screenshot from HTML: {e}")
+    #else:
+        #logging.warning(f"No corresponding HTML found for: {file_path}")

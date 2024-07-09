@@ -25,7 +25,7 @@ async def handle_image_reply(event: Event):
     for ext in [".jpg", ".png", ".jpeg"]:
         image_path = file_path + ext
         if os.path.exists(image_path):
-            logging.info(f"Image file found: {image_path}")  # 调试信息
+            #logging.info(f"Image file found: {image_path}")  # 调试信息
             # 读取图片文件并编码为Base64字符串
             try:
                 with open(image_path, "rb") as img_file:
@@ -34,11 +34,13 @@ async def handle_image_reply(event: Event):
                     img_segment = MessageSegment.image(f"base64://{img_base64}")
                     await image_reply.send(img_segment)
                     image_found = True
-                    logging.info(f"Sent image: {image_path}")  # 调试信息
+                    #logging.info(f"Sent image: {image_path}")  # 调试信息
                     break  # 发送一张图片后停止
             except Exception as e:
-                logging.error(f"Failed to send image: {e}")
+                return
+                #logging.error(f"Failed to send image: {e}")
 
     # 如果没有找到对应的图片
     if not image_found:
-        logging.warning(f"No corresponding image found for: {file_path}")
+        #logging.warning(f"No corresponding image found for: {file_path}")
+        return

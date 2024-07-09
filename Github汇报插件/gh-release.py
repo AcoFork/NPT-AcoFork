@@ -88,9 +88,11 @@ async def check_github_releases(url, repo_key):
                 latest_release_url = repo_info[repo_key]["releases"][0]["url"]
 
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error occurred: {e}")
+            return
+            #logger.error(f"HTTP error occurred: {e}")
         except Exception as e:
-            logger.error(f"An error occurred: {e}")
+            return
+            #logger.error(f"An error occurred: {e}")
 
 # 使用APScheduler插件来实现定时任务
 @scheduler.scheduled_job("interval", seconds=CHECK_INTERVAL)
