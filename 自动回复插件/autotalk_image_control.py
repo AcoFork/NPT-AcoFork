@@ -63,4 +63,5 @@ async def handle_text_reply(bot: Bot, event: Event):
         if user_msg in keyword_dict:
             await bot.send(event, MessageSegment.image(keyword_dict[user_msg]))
         else:
-            print(f"No matching keyword found for message: {user_msg}")
+            return
+            #print(f"No matching keyword found for message: {user_msg}")
