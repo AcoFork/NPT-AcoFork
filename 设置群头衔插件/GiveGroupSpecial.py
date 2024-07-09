@@ -1,22 +1,23 @@
 from nonebot import on_message
-from nonebot.adapters.onebot.v11 import Bot, Event
+from nonebot.adapters.onebot.v11 import Bot, Event, GroupMessageEvent
+from nonebot.message import event_preprocessor
+from nonebot.exception import IgnoredException
 
-# 创建一个事件处理器，监听用户的消息
-set_special_title = on_message()
+@event_preprocessor
+async def preprocess_set_special_title(bot: Bot, event: Event):
+    if isinstance(event, GroupMessageEvent):
+        message = event.get_plaintext()
+        if message.startswith("给我头衔 "):
+            try:
+                await handle_set_special_title(bot, event)
+            except Exception as e:
+                await bot.send(event, f"设置头衔时出错：{str(e)}")
+            finally:
+                raise IgnoredException("头衔设置命令已处理")
 
-@set_special_title.handle()
-async def handle_set_special_title(bot: Bot, event: Event):
-    # 提取用户发送的消息文本
+async def handle_set_special_title(bot: Bot, event: GroupMessageEvent):
     message = event.get_plaintext()
-
-    # 判断是否符合“给我头衔 XXX”的格式
-    if message.startswith("给我头衔 "):
-        # 提取出XXX作为群头衔
-        special_title = message[5:]
-
-        # 获取用户的QQ号
-        user_id = event.user_id
-
-        # 调用OneBot V11 API设置群头衔
-        await bot.call_api("set_group_special_title", group_id=event.group_id, user_id=user_id, special_title=special_title)
-        await set_special_title.finish("已设置你的群头衔为：" + special_title)
+    special_title = message[5:]
+    user_id = event.user_id
+    await bot.call_api("set_group_special_title", group_id=event.group_id, user_id=user_id, special_title=special_title)
+    await bot.send(event, "已设置你的群头衔为：" + special_title)
