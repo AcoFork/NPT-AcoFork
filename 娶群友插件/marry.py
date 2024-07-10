@@ -217,7 +217,7 @@ async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
     if spouse_id:
         spouse_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(spouse_id))
         avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={spouse_id}&s=640"
-        await bot.send(event, f"你的老婆是 {spouse_info['card'] or spouse_info['nickname']}（{spouse_id}）\n喵" + MessageSegment.image(avatar_url))
+        await bot.send(event, f"你的老婆是 {spouse_info['card'] or spouse_info['nickname']}（{spouse_id}）喵~\n" + MessageSegment.image(avatar_url))
     else:
         await bot.send(event, "你还没有老婆喵。")
 
