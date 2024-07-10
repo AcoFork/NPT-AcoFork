@@ -9,6 +9,8 @@ import json
 from datetime import date
 from pathlib import Path
 
+BLACKLIST = ["2854196310"]  # 配置黑名单
+
 # 数据存储路径
 DATA_FILE = Path("data/marry_plugin_data.json")
 
@@ -101,6 +103,9 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     group_member_list = await bot.get_group_member_list(group_id=int(group_id))
     available_members = [m for m in group_member_list if str(m['user_id']) != user_id and not data[group_id].get(str(m['user_id']), {}).get("spouse")]
     
+    # 过滤掉在黑名单中的成员
+    available_members = [m for m in available_members if str(m['user_id']) not in BLACKLIST]
+    
     if not available_members:
         await bot.send(event, "群里没有可以娶的群友了！")
         return
@@ -116,6 +121,7 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     
     avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={spouse_id}&s=640"
     await bot.send(event, f"恭喜你娶到了 {lucky_member['card'] or lucky_member['nickname']} 为妻！\n" + MessageSegment.image(avatar_url))
+
 
 async def handle_divorce(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
