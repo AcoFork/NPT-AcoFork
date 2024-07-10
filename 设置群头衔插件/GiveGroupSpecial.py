@@ -20,4 +20,4 @@ async def handle_set_special_title(bot: Bot, event: GroupMessageEvent):
     special_title = message[5:]
     user_id = event.user_id
     await bot.call_api("set_group_special_title", group_id=event.group_id, user_id=user_id, special_title=special_title)
-    await bot.send(event, "已设置你的群头衔为：" + special_title)
+    await bot.send(event, f"为你戴上名为 \"{special_title}\" 的冠冕了喵~")

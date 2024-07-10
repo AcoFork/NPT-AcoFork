@@ -98,7 +98,7 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     reset_daily_data(group_id, user_id)
     
     if data[group_id][user_id]["spouse"]:
-        await bot.send(event, "你已经有老婆了，不能再娶了！")
+        await bot.send(event, "你已经有老婆了喵！")
         return
     
     group_member_list = await bot.get_group_member_list(group_id=int(group_id))
@@ -108,7 +108,7 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     available_members = [m for m in available_members if str(m['user_id']) not in BLACKLIST]
     
     if not available_members:
-        await bot.send(event, "群里没有可以娶的群友了！")
+        await bot.send(event, "群里没有可以娶的群友了喵！")
         return
     
     lucky_member = random.choice(available_members)
@@ -121,7 +121,7 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     save_data()
     
     avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={spouse_id}&s=640"
-    await bot.send(event, f"恭喜你娶到了 {lucky_member['card'] or lucky_member['nickname']} 为妻！\n" + MessageSegment.image(avatar_url))
+    await bot.send(event, f"恭喜你娶到了 {lucky_member['card'] or lucky_member['nickname']} 为妻喵！\n" + MessageSegment.image(avatar_url))
 
 
 async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
@@ -132,11 +132,11 @@ async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
     reset_daily_data(group_id, user_id)
     
     if data[group_id][user_id]["spouse"]:
-        await bot.send(event, "你已经有老婆了，不能再强娶！")
+        await bot.send(event, "你已经有老婆了，不能再强娶了喵！")
         return
     
     if data[group_id][user_id]["force_marry_count"] >= 5:
-        await bot.send(event, "你今天已经强娶5次了，不能再强娶了！")
+        await bot.send(event, "你今天已经强娶5次了，不能再强娶了喵！")
         return
     
     # 获取at的用户
@@ -146,7 +146,7 @@ async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
             target_id = str(seg.data["qq"])
             break
     else:
-        await bot.send(event, "请@你想强娶的群友！")
+        await bot.send(event, "请@你想强娶的群友喵！")
         return
     
     init_user_data(group_id, target_id)
@@ -170,9 +170,9 @@ async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
         target_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(target_id))
         target_name = target_info['card'] or target_info['nickname']
         avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={target_id}&s=640"
-        await bot.send(event, f"强娶成功！{target_name}（{target_id}）现在是你的老婆了！\n" + MessageSegment.image(avatar_url))
+        await bot.send(event, f"强娶成功！{target_name}（{target_id}）现在是你的老婆了喵！\n" + MessageSegment.image(avatar_url))
     else:
-        await bot.send(event, "强娶失败！")
+        await bot.send(event, "强娶失败呜！")
 
 
 async def handle_divorce(bot: Bot, event: GroupMessageEvent):
@@ -183,16 +183,16 @@ async def handle_divorce(bot: Bot, event: GroupMessageEvent):
     reset_daily_data(group_id, user_id)
     
     if not data[group_id][user_id]["spouse"]:
-        await bot.send(event, "你还没有老婆，无法离婚！")
+        await bot.send(event, "你还没有老婆，和你自己离婚吗喵！")
         return
     
     spouse_id = data[group_id][user_id]["spouse"]
     
     if data[group_id][user_id].get("forced_marry", False) or data[group_id][spouse_id].get("forced_marry", False):
         if data[group_id][user_id].get("forced_marry", False):
-            await bot.send(event, "你是被强娶的，不能主动离婚！")
+            await bot.send(event, "你是被强娶的，不能主动离婚喵！")
         else:
-            await bot.send(event, "你的老婆是你主动强娶的，不能主动离婚！")
+            await bot.send(event, "你的老婆是你主动强娶的，不能主动离婚喵！")
         return
     
     spouse_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(spouse_id))
@@ -204,7 +204,7 @@ async def handle_divorce(bot: Bot, event: GroupMessageEvent):
     
     save_data()
     
-    await bot.send(event, f"你和 {spouse_name}（{spouse_id}） 已经解除婚姻关系。")
+    await bot.send(event, f"你和 {spouse_name}（{spouse_id}） 已经解除婚姻关系呜。")
 
 
 async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
@@ -217,9 +217,9 @@ async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
     if spouse_id:
         spouse_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(spouse_id))
         avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={spouse_id}&s=640"
-        await bot.send(event, f"你的老婆是 {spouse_info['card'] or spouse_info['nickname']}（{spouse_id}）\n" + MessageSegment.image(avatar_url))
+        await bot.send(event, f"你的老婆是 {spouse_info['card'] or spouse_info['nickname']}（{spouse_id}）\n喵" + MessageSegment.image(avatar_url))
     else:
-        await bot.send(event, "你还没有老婆哦。")
+        await bot.send(event, "你还没有老婆喵。")
 
 
 # 每天零点重置数据

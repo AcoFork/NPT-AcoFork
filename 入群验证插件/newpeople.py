@@ -12,7 +12,7 @@ verify_plugin = on_notice()
 verify_response = on_message()
 
 # 配置需要开启插件的群聊列表
-enabled_groups = [12345678, 09876543]  # 替换为你希望开启插件的群聊ID
+enabled_groups = [1234567, 9876543]  # 替换为你希望开启插件的群聊ID
 
 # 保存未验证用户的验证码和定时任务ID
 pending_verifications = {}
@@ -42,7 +42,7 @@ async def handle_group_increase(bot: Bot, event: GroupIncreaseNoticeEvent):
     }
 
     # 发送验证消息
-    message = MessageSegment.at(user_id) + f" 请发送以下验证码完成验证，超时60s将会被踢出\n验证码：{verification_code}"
+    message = MessageSegment.at(user_id) + f" 请发送以下验证码完成验证，超时60s将会被踢出群喵！\n验证码：{verification_code}"
     await bot.send_group_msg(group_id=group_id, message=message)
 
 
@@ -66,4 +66,4 @@ async def handle_verification_response(bot: Bot, event: GroupMessageEvent):
             job_id = pending_verifications[user_id]["job_id"]
             scheduler.remove_job(job_id)
             del pending_verifications[user_id]
-            await verify_response.finish(MessageSegment.at(user_id) + " 验证成功，欢迎加入！")
+            await verify_response.finish(MessageSegment.at(user_id) + " 验证成功，欢迎加入喵！")

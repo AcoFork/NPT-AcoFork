@@ -24,13 +24,13 @@ async def preprocess_emoji_extract(bot: Bot, event: Event):
     if user_id in waiting_for_url and waiting_for_url[user_id]:
         if msg == "取消":
             waiting_for_url[user_id] = False
-            await bot.send(event, "表情包提取功能已关闭。")
+            await bot.send(event, "表情包提取功能已关闭呜。")
             raise IgnoredException("表情包提取已取消")
 
         images = [seg.data["url"] for seg in event.message if seg.type == "image"]
         if images:
             image_url = images[0]
-            await bot.send(event, f"提取到图片链接辣！( ´ ▽ ` ) ：{image_url}")
+            await bot.send(event, f"提取到图片链接了喵！( ´ ▽ ` ) ：{image_url}")
             waiting_for_url[user_id] = False
             raise IgnoredException("表情包已提取")
 

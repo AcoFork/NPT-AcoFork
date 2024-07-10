@@ -26,7 +26,7 @@ async def preprocess_admin_commands(bot: Bot, event: GroupMessageEvent):
                     finally:
                         raise IgnoredException("管理命令已处理")
                 else:
-                    await bot.send(event, "你没有权限执行此命令。")
+                    await bot.send(event, "喵喵喵？喵喵听不懂喵~")
                     raise IgnoredException("非管理员尝试执行管理命令")
 
 async def handle_admin_command(bot: Bot, event: GroupMessageEvent):
@@ -39,7 +39,7 @@ async def handle_admin_command(bot: Bot, event: GroupMessageEvent):
             duration = int(message[2].data["text"].strip())
             
             await bot.set_group_ban(group_id=group_id, user_id=user_id, duration=duration)
-            await bot.send(event, f"已禁言用户 {user_id} {duration}秒")
+            await bot.send(event, f"已经让 {user_id} 闭嘴 {duration}秒了喵~")
             print(f"已禁言用户 {user_id} {duration}秒")  # 调试信息
 
     elif message[0].type == "text" and message[0].data["text"].startswith("踢人"):
@@ -47,7 +47,7 @@ async def handle_admin_command(bot: Bot, event: GroupMessageEvent):
             user_id = int(message[1].data["qq"])
             
             await bot.set_group_kick(group_id=group_id, user_id=user_id)
-            await bot.send(event, f"已踢出用户 {user_id}")
+            await bot.send(event, f"含泪踢出 {user_id} 喵~")
             print(f"已踢出用户 {user_id}")  # 调试信息
 
     elif message[0].type == "text" and message[0].data["text"].startswith("解除禁言"):
@@ -57,7 +57,7 @@ async def handle_admin_command(bot: Bot, event: GroupMessageEvent):
             print(f"解除禁言用户 {user_id}")  # 调试信息
             
             await bot.set_group_ban(group_id=group_id, user_id=user_id, duration=0)
-            await bot.send(event, f"已解除禁言用户 {user_id}")
+            await bot.send(event, f"喵喵？你可以说话了喵~： {user_id}")
             print(f"已解除禁言用户 {user_id}")  # 调试信息
 
 # 移除原有的消息处理器，因为我们现在使用预处理器来处理这些命令
