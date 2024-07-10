@@ -1,4 +1,5 @@
 import os
+import ssl
 import aiohttp
 from nonebot import on_message, get_bot
 from nonebot.adapters.onebot.v11 import Bot, Event, MessageSegment
@@ -32,7 +33,7 @@ async def handle_text_reply(bot: Bot, event: Event):
         keyword = user_msg.replace("添加图片关键词", "").strip()
         waiting_for_image_keyword[user_id] = keyword
         print(f"User {user_id} entering state: waiting_for_image with keyword: {keyword}")
-        await bot.send(event, f"请发送关键词 '{keyword}' 对应的图片\表情包（这将是跨纬度的，你也可以在别的群聊发送一张图\表情包），发送0退出(๑•́ ₃ •̀๑)ｴｰ")
+        await bot.send(event, f"请发送关键词 '{keyword}' 对应的图片或表情包（这将是跨纬度的，你也可以在别的群聊发送一张图或表情包），发送0退出(๑•́ ₃ •̀๑)ｴｰ")
     elif user_id in waiting_for_image_keyword:
         keyword = waiting_for_image_keyword[user_id]
         if user_msg == "0":
@@ -43,10 +44,17 @@ async def handle_text_reply(bot: Bot, event: Event):
             images = [seg.data["url"] for seg in event.get_message() if seg.type == "image"]
             if images:
                 image_url = images[0]
-                async with aiohttp.ClientSession() as session:
+                ssl_context = ssl.create_default_context()
+                ssl_context.set_ciphers('DEFAULT@SECLEVEL=1')  # Set a more lenient SSL context
+
+                async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=ssl_context)) as session:
                     async with session.get(image_url) as response:
                         content = await response.read()
-                        image_path = os.path.join(REPLY_DIR, f"{keyword}.jpg")
+                        # Get file extension from URL or response headers
+                        file_ext = '.gif' if image_url.lower().endswith('.gif') else os.path.splitext(image_url)[1]
+                        if not file_ext:
+                            file_ext = '.jpg' if 'image/jpeg' in response.headers.get('Content-Type', '') else '.png'
+                        image_path = os.path.join(REPLY_DIR, f"{keyword}{file_ext}")
                         with open(image_path, "wb") as f:
                             f.write(content)
                         print(f"Image downloaded and saved to: {image_path}")
@@ -65,3 +73,4 @@ async def handle_text_reply(bot: Bot, event: Event):
         else:
             return
             #print(f"No matching keyword found for message: {user_msg}")
+

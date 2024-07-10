@@ -14,20 +14,20 @@ async def preprocess_emoji_extract(bot: Bot, event: Event):
         return
 
     user_id = event.user_id
-    msg = event.get_message()
+    msg = event.get_message().extract_plain_text().strip()
 
-    if "表情包提取" in str(msg):
+    if msg == "表情包提取":
         waiting_for_url[user_id] = True
         await bot.send(event, "已开启表情包提取功能，请发送图片。发送 '取消' 以关闭此功能。")
         raise IgnoredException("表情包提取命令已处理")
     
     if user_id in waiting_for_url and waiting_for_url[user_id]:
-        if "取消" in str(msg):
+        if msg == "取消":
             waiting_for_url[user_id] = False
             await bot.send(event, "表情包提取功能已关闭。")
             raise IgnoredException("表情包提取已取消")
 
-        images = [seg.data["url"] for seg in msg if seg.type == "image"]
+        images = [seg.data["url"] for seg in event.message if seg.type == "image"]
         if images:
             image_url = images[0]
             await bot.send(event, f"提取到图片链接辣！( ´ ▽ ` ) ：{image_url}")
@@ -37,4 +37,3 @@ async def preprocess_emoji_extract(bot: Bot, event: Event):
     # 如果消息中不包含图片且提取功能开启中，则忽略消息
     if user_id in waiting_for_url and waiting_for_url[user_id]:
         raise IgnoredException("等待用户发送图片")
-
