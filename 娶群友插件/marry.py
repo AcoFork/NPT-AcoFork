@@ -1,12 +1,13 @@
 from nonebot import on_command
-from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent, MessageSegment
+import asyncio
+from nonebot.adapters import Bot, Event
+from nonebot.adapters.onebot.v11 import GroupMessageEvent, MessageSegment
 from nonebot.typing import T_State
 from nonebot.message import event_preprocessor
 from nonebot.exception import IgnoredException
-
+from datetime import datetime, timedelta
 import random
 import json
-from datetime import date
 from pathlib import Path
 
 BLACKLIST = ["2854196310"]  # 配置黑名单
@@ -34,7 +35,7 @@ def save_data():
 
 # 获取今天的日期字符串
 def get_today():
-    return date.today().isoformat()
+    return datetime.now().strftime('%Y-%m-%d')
 
 # 初始化用户数据
 def init_user_data(group_id: str, user_id: str):
@@ -63,7 +64,7 @@ marry_commands = ["娶群友", "离婚", "强娶", "我的群老婆"]
 
 # 消息预处理器
 @event_preprocessor
-async def preprocess_marry_commands(bot: Bot, event: GroupMessageEvent, state: T_State):
+async def preprocess_marry_commands(bot: Bot, event: Event, state: T_State):
     if isinstance(event, GroupMessageEvent):
         msg = str(event.get_message()).strip()
         if any(msg.startswith(cmd) for cmd in marry_commands):
@@ -123,45 +124,6 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     await bot.send(event, f"恭喜你娶到了 {lucky_member['card'] or lucky_member['nickname']} 为妻！\n" + MessageSegment.image(avatar_url))
 
 
-async def handle_divorce(bot: Bot, event: GroupMessageEvent):
-    group_id = str(event.group_id)
-    user_id = str(event.user_id)
-    
-    init_user_data(group_id, user_id)
-    reset_daily_data(group_id, user_id)
-    
-    if not data[group_id][user_id]["spouse"]:
-        await bot.send(event, "你还没有老婆，无法离婚！")
-        return
-    
-    if data[group_id][user_id]["divorce_count"] >= 2:
-        await bot.send(event, "你今天已经离婚两次了，不能再离了！")
-        return
-    
-    spouse_id = data[group_id][user_id]["spouse"]
-    
-    # 检查是否是被强娶的
-    if data[group_id][spouse_id].get("forced_marry", False):
-        await bot.send(event, "你是被强娶的，不能主动离婚！")
-        return
-    
-    spouse_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(spouse_id))
-    spouse_name = spouse_info['card'] or spouse_info['nickname']
-    
-    data[group_id][user_id]["spouse"] = None
-    data[group_id][spouse_id]["spouse"] = None
-    data[group_id][user_id]["divorce_count"] += 1
-    
-    # 清除被强娶标记
-    if "forced_marry" in data[group_id][user_id]:
-        del data[group_id][user_id]["forced_marry"]
-    if "forced_marry" in data[group_id][spouse_id]:
-        del data[group_id][spouse_id]["forced_marry"]
-    
-    save_data()
-    
-    await bot.send(event, f"你和 {spouse_name}（{spouse_id}） 已经解除婚姻关系。")
-
 async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
     user_id = str(event.user_id)
@@ -198,8 +160,7 @@ async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
         if data[group_id][target_id]["spouse"]:
             original_spouse = data[group_id][target_id]["spouse"]
             data[group_id][original_spouse]["spouse"] = None
-            if "forced_marry" in data[group_id][original_spouse]:
-                del data[group_id][original_spouse]["forced_marry"]
+            data[group_id][original_spouse]["forced_marry"] = False
         
         data[group_id][user_id]["spouse"] = target_id
         data[group_id][target_id]["spouse"] = user_id
@@ -212,6 +173,39 @@ async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
         await bot.send(event, f"强娶成功！{target_name}（{target_id}）现在是你的老婆了！\n" + MessageSegment.image(avatar_url))
     else:
         await bot.send(event, "强娶失败！")
+
+
+async def handle_divorce(bot: Bot, event: GroupMessageEvent):
+    group_id = str(event.group_id)
+    user_id = str(event.user_id)
+    
+    init_user_data(group_id, user_id)
+    reset_daily_data(group_id, user_id)
+    
+    if not data[group_id][user_id]["spouse"]:
+        await bot.send(event, "你还没有老婆，无法离婚！")
+        return
+    
+    spouse_id = data[group_id][user_id]["spouse"]
+    
+    if data[group_id][user_id].get("forced_marry", False) or data[group_id][spouse_id].get("forced_marry", False):
+        if data[group_id][user_id].get("forced_marry", False):
+            await bot.send(event, "你是被强娶的，不能主动离婚！")
+        else:
+            await bot.send(event, "你的老婆是你主动强娶的，不能主动离婚！")
+        return
+    
+    spouse_info = await bot.get_group_member_info(group_id=int(group_id), user_id=int(spouse_id))
+    spouse_name = spouse_info['card'] or spouse_info['nickname']
+    
+    data[group_id][user_id]["spouse"] = None
+    data[group_id][spouse_id]["spouse"] = None
+    data[group_id][user_id]["divorce_count"] += 1
+    
+    save_data()
+    
+    await bot.send(event, f"你和 {spouse_name}（{spouse_id}） 已经解除婚姻关系。")
+
 
 async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
@@ -227,5 +221,23 @@ async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
     else:
         await bot.send(event, "你还没有老婆哦。")
 
-# 初始化数据
+
+# 每天零点重置数据
+async def daily_reset():
+    while True:
+        now = datetime.now()
+        tomorrow = datetime(now.year, now.month, now.day) + timedelta(days=1)
+        delta = tomorrow - now
+        await asyncio.sleep(delta.total_seconds())
+        
+        # 执行每日重置操作
+        for group_id in data:
+            for user_id in data[group_id]:
+                reset_daily_data(group_id, user_id)
+        
+        save_data()
+
+# 初始化数据和启动每天重置任务
 init_data()
+loop = asyncio.get_event_loop()
+loop.create_task(daily_reset())
