@@ -11,15 +11,14 @@ GITHUB_API_URLS = [
 ]
 GROUP_IDS = [12345678]  # 你的QQ群号列表
 CHECK_INTERVAL = 5  # 检查间隔时间（秒）
-GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
+GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
-latest_trees = {}
 latest_branches = {}
 
 async def check_github_repo(url):
-    global latest_trees, latest_branches
+    global latest_branches
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
     async with httpx.AsyncClient() as client:
         try:
@@ -33,22 +32,38 @@ async def check_github_repo(url):
             
             if repo_name not in latest_branches:
                 latest_branches[repo_name] = current_branches
-                latest_trees[repo_name] = {}
                 return  # 首次检查，不发送消息
             
-            changes = []
-            for branch, commit_sha in current_branches.items():
-                if branch not in latest_branches[repo_name]:
-                    changes.append(("新建分支", branch))
-                elif commit_sha != latest_branches[repo_name][branch]:
-                    changes.append(("更新", branch))
-                    await check_branch_update(client, repo_name, branch, latest_branches[repo_name][branch], commit_sha, changes)
+            main_action = None
+            affected_branch = None
+            modified_files = []
+            executor = None
             
             for branch in set(latest_branches[repo_name].keys()) - set(current_branches.keys()):
-                changes.append(("删除分支", branch))
+                if main_action is None:
+                    main_action = "删除分支"
+                    affected_branch = branch
+                    executor = await get_branch_deletion_info(client, repo_name, branch)
             
-            if changes:
-                await report_changes(client, repo_name, changes)
+            if main_action != "删除分支":
+                for branch, commit_sha in current_branches.items():
+                    if branch not in latest_branches[repo_name]:
+                        main_action = "新建分支"
+                        affected_branch = branch
+                    elif commit_sha != latest_branches[repo_name][branch]:
+                        action, files, commit_executor = await check_branch_update(client, repo_name, branch, latest_branches[repo_name][branch], commit_sha)
+                        if action == "合并" and main_action != "新建分支":
+                            main_action = "合并"
+                            affected_branch = branch
+                            executor = commit_executor
+                        elif action in ["提交", "回滚提交"] and main_action not in ["新建分支", "合并"]:
+                            main_action = action
+                            affected_branch = branch
+                            executor = commit_executor
+                        modified_files.extend(files)
+            
+            if main_action:
+                await report_changes(client, repo_name, main_action, affected_branch, modified_files, executor)
             
             latest_branches[repo_name] = current_branches
             
@@ -57,7 +72,7 @@ async def check_github_repo(url):
         except Exception as e:
             logger.error(f"发生错误：{e}")
 
-async def check_branch_update(client, repo_name, branch, old_commit, new_commit, changes):
+async def check_branch_update(client, repo_name, branch, old_commit, new_commit):
     compare_url = f"https://api.github.com/repos/{repo_name}/compare/{old_commit}...{new_commit}"
     headers = {"Authorization": f"token {GITHUB_TOKEN}"}
     response = await client.get(compare_url, headers=headers)
@@ -65,40 +80,53 @@ async def check_branch_update(client, repo_name, branch, old_commit, new_commit,
     compare_data = response.json()
     
     if compare_data['merge_base_commit']['sha'] == old_commit:
-        changes.append(("推送", branch))
+        action = "提交"
+        commit_message = compare_data['commits'][-1]['commit']['message']
+        if commit_message.lower().startswith("revert"):
+            action = "回滚提交"
     else:
-        changes.append(("合并", branch))
+        action = "合并"
     
-    # 检查文件变动
     modified_files = [file['filename'] for file in compare_data['files']]
-    if modified_files:
-        changes.append(("文件变动", branch, modified_files))
+    executor = compare_data['commits'][-1]['commit']['author']['name']
+    return action, modified_files, executor
 
-async def report_changes(client, repo_name, changes):
-    commit_info = await get_latest_commit_info(client, repo_name, changes[0][1])
+async def get_branch_deletion_info(client, repo_name, branch):
+    events_url = f"https://api.github.com/repos/{repo_name}/events"
+    headers = {"Authorization": f"token {GITHUB_TOKEN}"}
+    response = await client.get(events_url, headers=headers)
+    response.raise_for_status()
+    events = response.json()
     
-    modified_files = []
-    actions = set()
-    branches = set()
-    for change in changes:
-        if change[0] == "文件变动":
-            modified_files.extend(change[2])
-        actions.add(change[0])
-        branches.add(change[1])
+    for event in events:
+        if event['type'] == 'DeleteEvent' and event['payload']['ref_type'] == 'branch' and event['payload']['ref'] == branch:
+            return event['actor']['login']
     
-    action = "/".join(actions)
-    branch = ", ".join(branches)
+    return "未知执行者"
+
+async def report_changes(client, repo_name, action, branch, modified_files, executor):
+    if action != "删除分支":
+        commit_info = await get_latest_commit_info(client, repo_name, branch)
+        executor = commit_info['executor']
+        time = commit_info['time']
+        summary = commit_info['summary']
+    else:
+        time = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S")
+        summary = "分支被删除"
     
     msg = f"仓库 {repo_name} 文件发生变动：\n"
-    msg += "\n".join(modified_files[:10])
-    if len(modified_files) > 10:
-        msg += f"\n...等共 {len(modified_files)} 个文件"
+    if modified_files:
+        msg += "\n".join(modified_files[:10])
+        if len(modified_files) > 10:
+            msg += f"\n...等共 {len(modified_files)} 个文件"
+    else:
+        msg += "无文件变动"
     
     msg += f"\n\n行为：{action}"
-    msg += f"\n执行者：{commit_info['executor']}"
-    msg += f"\n执行时间：{commit_info['time']}"
+    msg += f"\n执行者：{executor}"
+    msg += f"\n执行时间：{time}"
     msg += f"\n分支：{branch}"
-    msg += f"\n提交摘要：{commit_info['summary']}"
+    msg += f"\n提交摘要：{summary}"
     msg += f"\n仓库链接：https://github.com/{repo_name}"
     
     await send_group_message(msg)
