@@ -9,9 +9,9 @@ GITHUB_API_URLS = [
     "https://api.github.com/repos/TeamFlos/phira",
     "https://api.github.com/repos/AcoFork/NPT-AcoFork",
 ]
-GROUP_IDS = [12345678]  # 你的QQ群号列表
+GROUP_IDS = [34656463]  # 你的QQ群号列表
 CHECK_INTERVAL = 5  # 检查间隔时间（秒）
-GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
+GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXXXXXX"  # 你的GitHub个人访问令牌
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
