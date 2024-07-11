@@ -1,6 +1,6 @@
 # NPT-AcoFork
 
-这个仓库包含所有已公开的由AcoFork使用一些大语言模型编写的NoneBot2插件
+这个仓库包含所有已公开的由AcoFork、hazalita使用一些大语言模型编写的NoneBot2插件
 
 ___
 
