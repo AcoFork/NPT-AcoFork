@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import random
 import json
 from pathlib import Path
+import os
 
 BLACKLIST = ["2854196310"]  # 配置黑名单
 
@@ -29,9 +30,10 @@ def init_data():
 
 # 保存数据
 def save_data():
-    DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+    if data:  # 只在数据不为空时保存
+        DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
 
 # 获取今天的日期字符串
 def get_today():
@@ -60,7 +62,7 @@ def reset_daily_data(group_id: str, user_id: str):
         })
 
 # 定义娶群友相关的命令
-marry_commands = ["娶群友", "离婚", "强娶", "我的群老婆"]
+marry_commands = ["娶群友", "离婚", "强娶", "我的群老婆", "#重置娶群友"]
 
 # 消息预处理器
 @event_preprocessor
@@ -89,6 +91,8 @@ async def handle_marry_commands(bot: Bot, event: GroupMessageEvent, state: T_Sta
         await handle_force_marry(bot, event)
     elif cmd == "我的群老婆":
         await handle_check_spouse(bot, event)
+    elif cmd == "重置娶群友":
+        await handle_reset_marry(bot, event)
 
 async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
@@ -122,7 +126,6 @@ async def handle_marry_random(bot: Bot, event: GroupMessageEvent):
     
     avatar_url = f"http://q1.qlogo.cn/g?b=qq&nk={spouse_id}&s=640"
     await bot.send(event, f"恭喜你娶到了 {lucky_member['card'] or lucky_member['nickname']} 为妻喵！\n" + MessageSegment.image(avatar_url))
-
 
 async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
@@ -174,7 +177,6 @@ async def handle_force_marry(bot: Bot, event: GroupMessageEvent):
     else:
         await bot.send(event, "强娶失败呜！")
 
-
 async def handle_divorce(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
     user_id = str(event.user_id)
@@ -206,7 +208,6 @@ async def handle_divorce(bot: Bot, event: GroupMessageEvent):
     
     await bot.send(event, f"你和 {spouse_name}（{spouse_id}） 已经解除婚姻关系呜。")
 
-
 async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
     group_id = str(event.group_id)
     user_id = str(event.user_id)
@@ -221,6 +222,23 @@ async def handle_check_spouse(bot: Bot, event: GroupMessageEvent):
     else:
         await bot.send(event, "你还没有老婆喵。")
 
+async def handle_reset_marry(bot: Bot, event: GroupMessageEvent):
+    # 检查是否是管理员或超级用户
+    if not (event.sender.role in ['admin', 'owner'] or event.user_id == bot.config.superusers):
+        await bot.send(event, "只有管理员或超级用户才能执行此操作喵！")
+        return
+
+    global data
+    
+    # 删除json文件
+    if DATA_FILE.exists():
+        os.remove(DATA_FILE)
+        await bot.send(event, f"已删除文件: {DATA_FILE}")
+    
+    # 重置全局数据字典
+    data = {}
+    
+    await bot.send(event, "娶群友数据已重置喵！")
 
 # 每天零点重置数据
 async def daily_reset():
@@ -230,12 +248,18 @@ async def daily_reset():
         delta = tomorrow - now
         await asyncio.sleep(delta.total_seconds())
         
-        # 执行每日重置操作
-        for group_id in data:
-            for user_id in data[group_id]:
-                reset_daily_data(group_id, user_id)
+        print(f"执行每日重置操作 - {datetime.now()}")  # 添加日志
         
-        save_data()
+        # 删除json文件
+        if DATA_FILE.exists():
+            os.remove(DATA_FILE)
+            print(f"已删除文件: {DATA_FILE}")
+        
+        # 重置全局数据字典
+        global data
+        data = {}
+        
+        print("每日重置操作完成")  # 添加日志
 
 # 初始化数据和启动每天重置任务
 init_data()
