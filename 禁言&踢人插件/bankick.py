@@ -26,7 +26,6 @@ async def preprocess_admin_commands(bot: Bot, event: GroupMessageEvent):
                     finally:
                         raise IgnoredException("管理命令已处理")
                 else:
-                    await bot.send(event, "喵喵喵？喵喵听不懂喵~")
                     raise IgnoredException("非管理员尝试执行管理命令")
 
 async def handle_admin_command(bot: Bot, event: GroupMessageEvent):
