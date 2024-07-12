@@ -6,6 +6,7 @@ ___
 
  - 仓库全名：**N**oneBot-**P**lugin-**T**otal-AcoFork
  - 使用的大语言模型：Copilot、GPT-3.5、GPT-4o、Claude 3.5 Sonnet
+ - 推荐使用环境：Ubuntu LTS，Debian 12，Windows Server 2022
 
 ___
 
