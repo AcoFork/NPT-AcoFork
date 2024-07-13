@@ -8,7 +8,7 @@ import json
 import os
 
 plugin_dir = os.path.dirname(__file__)
-json_file = os.path.join(plugin_dir, 'data', 'sleep_time.json')
+json_file = os.path.join( 'data', 'sleep_time.json')
 os.makedirs(os.path.dirname(json_file), exist_ok=True)
 
 user_sleep_time = {}

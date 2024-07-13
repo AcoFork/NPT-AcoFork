@@ -7,9 +7,9 @@ GITHUB_API_URLS = [
     {"url": "https://api.github.com/repos/TeamFlos/phira/releases", "repo_name": "TeamFlos/phira"},
     {"url": "https://api.github.com/repos/AcoFork/NPT-AcoFork/releases", "repo_name": "AcoFork/NPT-AcoFork"}
 ]
-GROUP_ID = 12345678 #发送的群
+GROUP_ID = 1241233424
 CHECK_INTERVAL = 5
-GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXX"
+GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXX"
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
@@ -68,14 +68,15 @@ async def scheduled_check():
         await check_github_releases(config["url"], config["repo_name"])
 
 async def startup_report(bot: Bot):
-    report = "仓库 Release 报告:\n"
-    for config in GITHUB_API_URLS:
-        releases = await check_github_releases(config["url"], config["repo_name"])
-        if releases:
-            report += f"{config['repo_name']}: {len(releases['releases'])} 个 Release, {len(releases['pre-releases'])} 个 Pre-release\n"
-        else:
-            report += f"{config['repo_name']}: 获取失败\n"
-    await bot.send_group_msg(group_id=GROUP_ID, message=Message(report))
+    return
+    #report = "仓库 Release 报告:\n"
+    #for config in GITHUB_API_URLS:
+        #releases = await check_github_releases(config["url"], config["repo_name"])
+        #if releases:
+        #    report += f"{config['repo_name']}: {len(releases['releases'])} 个 Release, {len(releases['pre-releases'])} 个 Pre-release\n"
+    #    else:
+    #        report += f"{config['repo_name']}: 获取失败\n"
+   #await bot.send_group_msg(group_id=GROUP_ID, message=Message(report))
 
 @driver.on_bot_connect
 async def _(bot: Bot):
