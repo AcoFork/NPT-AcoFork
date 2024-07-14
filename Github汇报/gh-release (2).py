@@ -1,15 +1,19 @@
+import logging
 import httpx
 from nonebot import require, get_driver
 from nonebot.adapters.onebot.v11 import Bot, Message
 from nonebot.log import logger
 
+# 禁用 httpx 日志
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
 GITHUB_API_URLS = [
     {"url": "https://api.github.com/repos/TeamFlos/phira/releases", "repo_name": "TeamFlos/phira"},
     {"url": "https://api.github.com/repos/AcoFork/NPT-AcoFork/releases", "repo_name": "AcoFork/NPT-AcoFork"}
 ]
-GROUP_ID = 1241233424
+GROUP_ID = 123456789
 CHECK_INTERVAL = 5
-GITHUB_TOKEN = "ghp_XXXXXXXXXXXXXXXXXXXX"
+GITHUB_TOKEN = "ghp_122121212121"
 
 driver = get_driver()
 scheduler = require("nonebot_plugin_apscheduler").scheduler
