@@ -9,7 +9,7 @@ from nonebot.adapters.onebot.v11 import MessageSegment, MessageEvent
 from nonebot.message import event_preprocessor
 from nonebot.exception import IgnoredException
 from urllib.parse import urlparse
-from playwright.async_api import async_playwright
+from playwright.async_api import async_playwright, Page, Browser
 from PIL import Image
 
 # 配置日志
@@ -50,10 +50,17 @@ async def preprocess_webpage_screenshot(bot: Bot, event: Event):
 async def handle_webpage_screenshot(bot: Bot, event: Event, url: str, full_page: bool):
     try:
         async with async_playwright() as p:
-            browser = await p.chromium.launch()
+            browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
             await page.set_viewport_size({"width": 1920, "height": 1080})
-            await page.goto(url, wait_until="networkidle")
+            
+            # 增加超时时间到 120 秒
+            try:
+                await page.goto(url, wait_until="networkidle", timeout=120000)
+            except Exception as e:
+                logger.error(f"页面加载超时或出错：{str(e)}", exc_info=True)
+                await bot.send(event, f"页面加载超时或出错：{str(e)}")
+                return
             
             if full_page:
                 screenshot = await page.screenshot(full_page=True)
