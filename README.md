@@ -1,3 +1,7 @@
+# 这种依托石你是怎么有脸发出来的
+
+___
+
 # NPT-AcoFork
 
 这个仓库包含所有已公开的由AcoFork、hazalita和其他协作者使用一些大语言模型编写的NoneBot2插件
